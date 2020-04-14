@@ -244,6 +244,7 @@ async function main () {
       <iframe
         id="frame"
         src="${`${appDir}/magnet${window.location.pathname.replace(appDir, '')}`}"
+        style="display: none"
         ></iframe>
 
       <style>
@@ -261,12 +262,17 @@ async function main () {
       </style>`
 
     document.getElementById('frame').addEventListener('load', (ev) => {
+      const iframe = ev.target
+
       // remove loading indicator
       const loading = document.getElementById('loading')
       if (loading) loading.remove()
 
+      // make the iframe visible
+      iframe.style.display = ''
+
       // sync href of iframe and main page
-      const iframeUrl = ev.target.contentWindow.location.pathname
+      const iframeUrl = iframe.contentWindow.location.pathname
       window.history.replaceState(null, null, iframeUrl.replace('/magnet/', '/'))
     })
   }
