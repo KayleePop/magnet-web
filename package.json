@@ -1,0 +1,21 @@
+{
+  "name": "magnet-web",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run bundle && npm run generate-worker && node server.js",
+    "bundle": "browserify index.js > bundle.js",
+    "generate-worker": "echo \"(path) => path.startsWith('/magnet/')\" | stream-to-sw > worker.js",
+    "test": "standard"
+  },
+  "author": "KayleePop",
+  "license": "MIT",
+  "devDependencies": {
+    "browserify": "^16.5.1",
+    "standard": "^14.3.3"
+  },
+  "dependencies": {
+    "range-parser": "^1.2.1",
+    "stream-to-sw": "^1.1.0",
+    "webtorrent": "^0.108.0"
+  }
+}
