@@ -2,10 +2,10 @@
   "name": "magnet-web",
   "main": "index.js",
   "scripts": {
-    "start": "npm run bundle && npm run generate-worker && node server.js",
+    "start": "npm run build && node server.js",
     "bundle": "browserify index.js > bundle.js",
     "generate-worker": "echo \"(path) => path.startsWith('/magnet/')\" | stream-to-sw > worker.js",
-    "test": "standard"
+    "build": "npm run bundle && npm run generate-worker"
   },
   "author": "KayleePop",
   "license": "MIT",
