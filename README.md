@@ -4,6 +4,8 @@ https://kayleepop.github.io/magnet-web/
 
 View webtorrents like they're an http directory using a service worker. Easily view webtorrents in browser, and even load websites over webtorrent.
 
+It's also hosted on glitch: https://glitch.com/~kayleepop-magnet-web
+
 ## How To Run
 
 ``` bash
