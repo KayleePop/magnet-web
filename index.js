@@ -244,7 +244,7 @@ async function main () {
     document.body.innerHTML += `
       <iframe
         id="frame"
-        src="${`${appDir}/magnet${window.location.pathname}`}"
+        src="${`${appDir}/magnet${window.location.pathname.replace(appDir, '')}`}"
         onLoad="parent.history.replaceState(null, null, this.contentWindow.location.href.replace('/magnet',''))"
         ></iframe>
 
