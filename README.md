@@ -32,6 +32,9 @@ The URL scheme is `/{webtorrent Info Hash}/path` where the path is to a file wit
 
 ## TODO
 
+PRs are welcome for these and any other ideas.
+
+- Prettier homepage
 - Allow loading webseeds and xs via query param?
 - interface for hosting a static website via webtorrent
   - Drag and Drop the site's files (like instant.io)
