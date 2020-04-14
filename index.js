@@ -6,14 +6,18 @@ const webtorrentClient = new WebTorrent()
 
 const registerStreamToFetch = require('stream-to-sw')
 
-const readyPromise = registerStreamToFetch('/worker.js', async (req, res) => {
+// if the magnet-web app is inside a directory instead of the html root,
+//  use this to set all the urls to that directory
+const appDir = ''
+
+const readyPromise = registerStreamToFetch(`${appDir}/worker.js`, async (req, res) => {
   // torrent file names with spaces or other characters get encoded
   const torrentPath = decodeURI(req.path)
 
   // format of intercepted URLs is /magnet/${hashId}/path
-  const urlParts = torrentPath.split('/')
-  const hashId = urlParts[2]
-  const filePath = urlParts.slice(3).join('/')
+  const matched = /([a-zA-Z0-9]{40})\/?(.*)/.exec(torrentPath)
+  const hashId = matched[1]
+  const filePath = matched[2] || ''
 
   const torrent = await new Promise((resolve, reject) => {
     // these are the default trackers used by instant.io and webtorrent desktop
@@ -86,7 +90,7 @@ const readyPromise = registerStreamToFetch('/worker.js', async (req, res) => {
 
             return `<tr>
                 <td>
-                  <a href="/magnet/${fileHref}">
+                  <a href="${appDir}/magnet/${fileHref}">
                     ${trimmedFilePath}
                   </a>
                 </td>
@@ -150,7 +154,10 @@ async function main () {
   }
 
   // if url doesn't match /${hashId}/*
-  if (!/^\/[a-zA-Z0-9]{40}(\/.*)?$/.test(window.location.pathname)) {
+  if (
+    !window.location.pathname.startsWith(appDir) ||
+    !/\/[a-zA-Z0-9]{40}(\/.*)?$/.test(window.location.pathname)
+  ) {
     document.body.innerHTML += `
       <div id="hashFormDiv">
         <span style="font-size:3em">Magnet Web</span>
@@ -168,10 +175,10 @@ async function main () {
       </form>
 
         <div id="links">
-          <a href="/08ada5a7a6183aae1e09d831df6748d566095a10">
+          <a href="${appDir}/08ada5a7a6183aae1e09d831df6748d566095a10">
             Sintel Torrent
       </a>
-          <a href="/a88fda5954e89178c372716a6a78b8180ed4dad3">
+          <a href="${appDir}/a88fda5954e89178c372716a6a78b8180ed4dad3">
             Wired CD
           </a>
           <a href="https://github.com/KayleePop/magnet-web">
@@ -196,10 +203,10 @@ async function main () {
     document.getElementById('hashForm').addEventListener('submit', () => {
       const input = document.getElementById('infoHashInput').value
       const hashId = input.match(/[a-zA-Z0-9]{40}/)[0]
-      window.location.href = `/${hashId}`
+      window.location.href = `${appDir}/${hashId}`
     }, { once: true })
   } else {
-    // else if url doesn't match /{hashId}/*
+    // else if url does match /{hashId}/*
 
     // display loading indicator while SW gets ready and torrent is fetched
     document.body.innerHTML += `
@@ -237,7 +244,7 @@ async function main () {
     document.body.innerHTML += `
       <iframe
         id="frame"
-        src="${'/magnet' + window.location.pathname}"
+        src="${`${appDir}/magnet${window.location.pathname}`}"
         onLoad="parent.history.replaceState(null, null, this.contentWindow.location.href.replace('/magnet',''))"
         ></iframe>
 
