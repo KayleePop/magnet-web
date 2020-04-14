@@ -240,12 +240,10 @@ async function main () {
     // while the main thread does the above processing
     // it would be better to run webtorrent directly from the service worker,
     //  but webRTC connections can't be started from workers (yet)
-    // use onLoad to sync the URL of the iframe and the main page
     document.body.innerHTML += `
       <iframe
         id="frame"
         src="${`${appDir}/magnet${window.location.pathname.replace(appDir, '')}`}"
-        onLoad="parent.history.replaceState(null, null, this.contentWindow.location.href.replace('/magnet',''))"
         ></iframe>
 
       <style>
@@ -262,9 +260,15 @@ async function main () {
         }
       </style>`
 
-    document.getElementById('frame').addEventListener('load', () => {
-      document.getElementById('loading').remove()
-    }, { once: true })
+    document.getElementById('frame').addEventListener('load', (ev) => {
+      // remove loading indicator
+      const loading = document.getElementById('loading')
+      if (loading) loading.remove()
+
+      // sync href of iframe and main page
+      const iframeUrl = ev.target.contentWindow.location.pathname
+      window.history.replaceState(null, null, iframeUrl.replace('/magnet/', '/'))
+    })
   }
 
   // if an error occurs, display it at the top of the screen
