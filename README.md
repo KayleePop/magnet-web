@@ -11,6 +11,17 @@ $ npm install
 $ npm start
 ```
 
+## Embed
+
+Magnet-web can be embedded into your site for super easy access to a file inside a webtorrent.
+
+Here we load the Sintel webtorrent into the page.
+``` html
+<iframe src="https://kayleepop.github.io/magnet-web/08ada5a7a6183aae1e09d831df6748d566095a10/Sintel.mp4"></iframe>
+```
+
+Unfortunately, only iframes will work. You cannot use this link in other places like directly into a video element. This could be accomplished with the same technique as magnet-web though, using [Stream-to-SW](https://github.com/KayleePop/stream-to-sw).
+
 ## About
 
 Magnet web uses [Stream-to-SW](https://github.com/KayleePop/stream-to-sw) to register a service worker on the main thread, then it loads the actual file from the webtorrent into an iframe. Since Stream-to-SW pings all clients in scope, the main thread can process the requests that are loaded into the iframe.
