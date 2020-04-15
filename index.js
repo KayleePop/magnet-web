@@ -184,12 +184,11 @@ async function main () {
       const iframePath = iframe.contentWindow.location.href.replace(window.origin, '')
       window.history.replaceState(null, null, iframePath.replace('/magnet/', '/'))
     }
-    // on every load attach unload handler that waits until the next tick then updates URL
-    //  (unload handlers are removed on new page load)
-    //  (new href is set immediately after unload finishes)
     // If updateUrl() was simply called on 'load', then the url isn't updated until after loading finishes
     iframe.addEventListener('load', () => {
+      //  unload handlers are removed on new page load
       iframe.contentWindow.addEventListener('unload', () => {
+        //  new href is set one tick after unload finishes
         setTimeout(updateUrl, 0)
       })
     })
@@ -288,8 +287,8 @@ async function main () {
   // it would be better to run webtorrent directly from the service worker,
   //  but webRTC connections can't be started from workers (yet)
   async function displayTorrentFrame () {
-    // /{hashid}/*
-    const torrentPath = window.location.pathname.replace(appDir, '')
+    // /{hashid}/* including query params and hash
+    const torrentPath = window.location.href.replace(`${window.origin}${appDir}`, '')
 
     document.body.innerHTML += `
       <span id="torrentFrame">
