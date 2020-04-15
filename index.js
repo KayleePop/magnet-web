@@ -172,11 +172,10 @@ async function main () {
     // hide frame until it's loaded and loading indicator is gone
     torrentFrame.style.display = 'none'
 
-    // await torrentFrame.load
-    await new Promise(resolve => iframe.addEventListener('load', resolve, { once: true }))
-
+    iframe.addEventListener('load', () => {
     document.getElementById('loadingIndicator').remove()
     torrentFrame.style.display = ''
+    }, { once: true })
 
     // sync href of iframe and main page whenever the iframe loads a new page
     // should be the same but without the /magnet prefix
