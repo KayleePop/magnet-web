@@ -47,3 +47,4 @@ PRs are welcome for these and any other ideas.
 - Cache torrents maybe?
   - cache .torrent file in IDB (to allow seeding without any other peers)
   - cache torrent data in IDB ([idbkv-chunk-store](https://github.com/KayleePop/idbkv-chunk-store))
+  - interface for managing (deleting) stored data from IDB
