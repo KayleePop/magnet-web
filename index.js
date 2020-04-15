@@ -148,36 +148,74 @@ main()
 async function main () {
   // wait until the DOM is available
   if (document.readyState === 'loading') {
-    await new Promise(resolve => {
+    await new Promise((resolve) => {
       window.addEventListener('DOMContentLoaded', resolve, { once: true })
     })
   }
 
-  // if url doesn't match /${hashId}/*
-  if (
-    !window.location.pathname.startsWith(appDir) ||
-    !/\/[a-zA-Z0-9]{40}(\/.*)?$/.test(window.location.pathname)
-  ) {
+  const path = window.location.pathname
+  // ${appId}/${hashId}/*
+  const isTorrentPath = path.startsWith(appDir) && /\/[a-zA-Z0-9]{40}(\/.*)?$/.test(path)
+
+  // display functions hoisted from below
+  if (isTorrentPath) {
+    displayLoadingIndicator()
+
+    // wait until the SW is ready before creating Iframe
+    await readyPromise
+
+    displayTorrentFrame()
+
+    const torrentFrame = document.getElementById('torrentFrame')
+    const iframe = document.querySelector('#torrentFrame iframe')
+
+    // hide frame until it's loaded and loading indicator is gone
+    torrentFrame.style.display = 'none'
+
+    // await torrentFrame.load
+    await new Promise(resolve => iframe.addEventListener('load', resolve, { once: true }))
+
+    document.getElementById('loadingIndicator').remove()
+    torrentFrame.style.display = ''
+
+    // sync href of iframe and main page whenever the iframe loads a new page
+    // should be the same but without the /magnet prefix
+    iframe.addEventListener('load', (ev) => {
+      const iframePath = ev.target.contentWindow.location.pathname
+      window.history.replaceState(null, null, iframePath.replace('/magnet/', '/'))
+    })
+  } else {
+    displayHomepage()
+  }
+
+  // if a webtorrent client error (fatal) occurs, display it at the top of the screen
+  webtorrentClient.once('error', (error) => {
+    document.body.innerHTML = `
+      <code style="color: red">${error}</code>
+      ${document.body.innerHTML}`
+  })
+
+  function displayHomepage () {
     document.body.innerHTML += `
-      <div id="hashFormDiv">
+      <div id="homepage">
         <span style="font-size:3em">Magnet Web</span>
-      <form id="hashForm" onsubmit="return false">
-        <label>
-          Magnet Link or InfoHash:
-          <input id="infoHashInput"
-            autofocus
-            type="text"
-            pattern=".*[a-zA-Z0-9]{40}.*"
-          >
-        </label>
+        <form id="hashForm" onsubmit="return false"> <!-- pevent default submission -->
+          <label>
+            Magnet Link or InfoHash:
+            <input id="infoHashInput"
+              autofocus
+              type="text"
+              pattern=".*[a-zA-Z0-9]{40}.*"
+            >
+          </label>
           </br>
-        <button type="submit">View Torrent</button>
-      </form>
+          <button type="submit">View Torrent</button>
+        </form>
 
         <div id="links">
           <a href="${appDir}/08ada5a7a6183aae1e09d831df6748d566095a10">
             Sintel Torrent
-      </a>
+          </a>
           <a href="${appDir}/a88fda5954e89178c372716a6a78b8180ed4dad3">
             Wired CD
           </a>
@@ -185,44 +223,44 @@ async function main () {
             magnet-web github repository
           </a>
         </div>
-      </div>
-      <style>
-        #hashFormDiv, #hashForm, #links {
-          display: flex;
-          align-items: center;
-          flex-direction: column;
-          justify-content: center;
-        }
+        <style>
+          #homepage {
+            height: 100%;
+          }
 
-        #hashFormDiv {
-          height: 100%;
-          justify-content: space-evenly;
-        }
-      </style>
+          #homepage, #hashForm, #links {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-evenly;
+          }
+        </style>
+      </div>
     `
+
+    // when fom is submitted, go to ${appDir}/${input.value}
     document.getElementById('hashForm').addEventListener('submit', () => {
-      const input = document.getElementById('infoHashInput').value
-      const hashId = input.match(/[a-zA-Z0-9]{40}/)[0]
+      const input = document.getElementById('infoHashInput')
+      const hashId = input.value.match(/[a-zA-Z0-9]{40}/)[0]
       window.location.href = `${appDir}/${hashId}`
     }, { once: true })
-  } else {
-    // else if url does match /{hashId}/*
+  }
 
-    // display loading indicator while SW gets ready and torrent is fetched
+  function displayLoadingIndicator () {
     document.body.innerHTML += `
-      <div id="loading">
+      <div id="loadingIndicator">
         loading
 
         <style>
-          #loading {
+          #loadingIndicator {
             font-size: 3em;
             height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
           }
-          #loading:after {
-            animation: dots steps(1,end) 3s infinite;
+          #loadingIndicator:after {
+            animation: dots 3s infinite;
             content: '';
           }
           @keyframes dots {
@@ -232,55 +270,33 @@ async function main () {
           }
         </style>
       </div>`
-
-    // wait until the SW is ready before creating Iframe
-    await readyPromise
-
-    // load the torrent file in a borderless iframe, so that the SW can intercept everything
-    // while the main thread does the above processing
-    // it would be better to run webtorrent directly from the service worker,
-    //  but webRTC connections can't be started from workers (yet)
-    document.body.innerHTML += `
-      <iframe
-        id="frame"
-        src="${`${appDir}/magnet${window.location.pathname.replace(appDir, '')}`}"
-        style="display: none"
-        ></iframe>
-
-      <style>
-        body {
-          margin: 0px;
-          width: 100%;
-          height: 100%;
-        }
-
-        iframe {
-          border: none;
-          width: 100%;
-          height: 100%;
-        }
-      </style>`
-
-    document.getElementById('frame').addEventListener('load', (ev) => {
-      const iframe = ev.target
-
-      // remove loading indicator
-      const loading = document.getElementById('loading')
-      if (loading) loading.remove()
-
-      // make the iframe visible
-      iframe.style.display = ''
-
-      // sync href of iframe and main page
-      const iframeUrl = iframe.contentWindow.location.pathname
-      window.history.replaceState(null, null, iframeUrl.replace('/magnet/', '/'))
-    })
   }
 
-  // if an error occurs, display it at the top of the screen
-  webtorrentClient.once('error', (error) => {
-    document.body.innerHTML = `
-      <code style="color: red">${error}</code>
-      ${document.body.innerHTML}`
-  })
+  // load the torrent file in a borderless iframe, so that the SW can intercept everything
+  //  while the main thread is available to create the stream for the response
+  // it would be better to run webtorrent directly from the service worker,
+  //  but webRTC connections can't be started from workers (yet)
+  async function displayTorrentFrame () {
+    // /{hashid}/*
+    const torrentPath = window.location.pathname.replace(appDir, '')
+
+    document.body.innerHTML += `
+      <span id="torrentFrame">
+        <iframe src="${`${appDir}/magnet${torrentPath}`}"></iframe>
+
+        <style>
+          body {
+            margin: 0px;
+            width: 100%;
+            height: 100%;
+          }
+
+          #torrentFrame iframe {
+            border: none;
+            width: 100%;
+            height: 100%;
+          }
+        </style>
+      </span>`
+  }
 }
