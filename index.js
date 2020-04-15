@@ -173,16 +173,28 @@ async function main () {
     torrentFrame.style.display = 'none'
 
     iframe.addEventListener('load', () => {
-    document.getElementById('loadingIndicator').remove()
-    torrentFrame.style.display = ''
+      document.getElementById('loadingIndicator').remove()
+      torrentFrame.style.display = ''
     }, { once: true })
 
-    // sync href of iframe and main page whenever the iframe loads a new page
+    // sync href of iframe and main page
     // should be the same but without the /magnet prefix
-    iframe.addEventListener('load', (ev) => {
-      const iframePath = ev.target.contentWindow.location.pathname
+    const updateUrl = () => {
+      // calling replaceState with protocol and hostname (https://host.com) throws security error
+      const iframePath = iframe.contentWindow.location.href.replace(window.origin, '')
       window.history.replaceState(null, null, iframePath.replace('/magnet/', '/'))
+    }
+    // on every load attach unload handler that waits until the next tick then updates URL
+    //  (unload handlers are removed on new page load)
+    //  (new href is set immediately after unload finishes)
+    // If updateUrl() was simply called on 'load', then the url isn't updated until after loading finishes
+    iframe.addEventListener('load', () => {
+      iframe.contentWindow.addEventListener('unload', () => {
+        setTimeout(updateUrl, 0)
+      })
     })
+    iframe.contentWindow.addEventListener('hashchange', updateUrl) // when hash changes
+    iframe.contentWindow.addEventListener('popstate', updateUrl) // when history API is used
   } else {
     displayHomepage()
   }
