@@ -161,6 +161,8 @@ async function main () {
   if (isTorrentPath) {
     displayTorrentPage()
   } else {
+    // reset url to home if it doesn't match any routes
+    window.history.replaceState(null, null, `${appDir}`)
     displayHomepage()
   }
 
