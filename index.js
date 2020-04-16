@@ -153,9 +153,9 @@ async function main () {
     })
   }
 
-  const path = window.location.pathname
-  // ${appId}/${hashId}/*
-  const isTorrentPath = path.startsWith(appDir) && /\/[a-zA-Z0-9]{40}(\/.*)?$/.test(path)
+  const path = window.location.pathname.replace(appDir, '')
+  // /${hashId}/*
+  const isTorrentPath = /^\/[a-zA-Z0-9]{40}(\/.*)?$/.test(path)
 
   // display functions hoisted from below
   if (isTorrentPath) {
