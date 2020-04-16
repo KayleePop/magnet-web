@@ -173,44 +173,6 @@ async function main () {
       ${document.body.innerHTML}`
   })
 
-  async function displayTorrentPage () {
-    displayLoadingIndicator()
-
-    // iframe needs to be intercepted by service worker
-    await swReadyPromise
-
-    displayTorrentFrame()
-
-    const torrentFrame = document.getElementById('torrentFrame')
-    const iframe = document.querySelector('#torrentFrame iframe')
-
-    // hide frame until it's loaded and loading indicator is gone
-    torrentFrame.style.display = 'none'
-
-    iframe.addEventListener('load', () => {
-      document.getElementById('loadingIndicator').remove()
-      torrentFrame.style.display = ''
-    }, { once: true })
-
-    // sync href of iframe and main page
-    // should be the same but without the /magnet prefix
-    const updateUrl = () => {
-      // calling replaceState with protocol and hostname (https://host.com) throws security error
-      const iframePath = iframe.contentWindow.location.href.replace(window.origin, '')
-      window.history.replaceState(null, null, iframePath.replace('/magnet/', '/'))
-    }
-    // If updateUrl() was simply called on 'load', then the url isn't updated until after loading finishes
-    iframe.addEventListener('load', () => {
-      //  unload handlers are removed on new page load
-      iframe.contentWindow.addEventListener('unload', () => {
-        //  new href is set one tick after unload finishes
-        setTimeout(updateUrl, 0)
-      })
-    })
-    iframe.contentWindow.addEventListener('hashchange', updateUrl) // when hash changes
-    iframe.contentWindow.addEventListener('popstate', updateUrl) // when history API is used
-  }
-
   function displayHomepage () {
     document.body.innerHTML += `
       <div id="homepage">
@@ -260,6 +222,44 @@ async function main () {
       const hashId = input.value.match(/[a-zA-Z0-9]{40}/)[0]
       window.location.href = `${appDir}/${hashId}`
     }, { once: true })
+  }
+
+  async function displayTorrentPage () {
+    displayLoadingIndicator()
+
+    // iframe needs to be intercepted by service worker
+    await swReadyPromise
+
+    displayTorrentFrame()
+
+    const torrentFrame = document.getElementById('torrentFrame')
+    const iframe = document.querySelector('#torrentFrame iframe')
+
+    // hide frame until it's loaded and loading indicator is gone
+    torrentFrame.style.display = 'none'
+
+    iframe.addEventListener('load', () => {
+      document.getElementById('loadingIndicator').remove()
+      torrentFrame.style.display = ''
+    }, { once: true })
+
+    // sync href of iframe and main page
+    // should be the same but without the /magnet prefix
+    const updateUrl = () => {
+      // calling replaceState with protocol and hostname (https://host.com) throws security error
+      const iframePath = iframe.contentWindow.location.href.replace(window.origin, '')
+      window.history.replaceState(null, null, iframePath.replace('/magnet/', '/'))
+    }
+    // If updateUrl() was simply called on 'load', then the url isn't updated until after loading finishes
+    iframe.addEventListener('load', () => {
+      //  unload handlers are removed on new page load
+      iframe.contentWindow.addEventListener('unload', () => {
+        //  new href is set one tick after unload finishes
+        setTimeout(updateUrl, 0)
+      })
+    })
+    iframe.contentWindow.addEventListener('hashchange', updateUrl) // when hash changes
+    iframe.contentWindow.addEventListener('popstate', updateUrl) // when history API is used
   }
 
   function displayLoadingIndicator () {
