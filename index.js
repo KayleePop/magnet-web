@@ -286,7 +286,7 @@ async function main () {
   //  while the main thread is available to create the stream for the response
   // it would be better to run webtorrent directly from the service worker,
   //  but webRTC connections can't be started from workers (yet)
-  async function displayTorrentFrame () {
+  function displayTorrentFrame () {
     // /{hashid}/* including query params and hash
     const torrentPath = window.location.href.replace(`${window.origin}${appDir}`, '')
 
