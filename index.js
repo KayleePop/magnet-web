@@ -159,6 +159,19 @@ async function main () {
 
   // display functions hoisted from below
   if (isTorrentPath) {
+    displayTorrentPage()
+  } else {
+    displayHomepage()
+  }
+
+  // if a webtorrent client error (fatal) occurs, display it at the top of the screen
+  webtorrentClient.once('error', (error) => {
+    document.body.innerHTML = `
+      <code style="color: red">${error}</code>
+      ${document.body.innerHTML}`
+  })
+
+  async function displayTorrentPage () {
     displayLoadingIndicator()
 
     // iframe needs to be intercepted by service worker
@@ -194,16 +207,7 @@ async function main () {
     })
     iframe.contentWindow.addEventListener('hashchange', updateUrl) // when hash changes
     iframe.contentWindow.addEventListener('popstate', updateUrl) // when history API is used
-  } else {
-    displayHomepage()
   }
-
-  // if a webtorrent client error (fatal) occurs, display it at the top of the screen
-  webtorrentClient.once('error', (error) => {
-    document.body.innerHTML = `
-      <code style="color: red">${error}</code>
-      ${document.body.innerHTML}`
-  })
 
   function displayHomepage () {
     document.body.innerHTML += `
