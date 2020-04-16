@@ -10,7 +10,7 @@ const registerStreamToFetch = require('stream-to-sw')
 //  use this to set all the urls to that directory
 const appDir = ''
 
-const readyPromise = registerStreamToFetch(`${appDir}/worker.js`, async (req, res) => {
+const swReadyPromise = registerStreamToFetch(`${appDir}/worker.js`, async (req, res) => {
   // torrent file names with spaces or other characters get encoded
   const torrentPath = decodeURI(req.path)
 
@@ -161,8 +161,8 @@ async function main () {
   if (isTorrentPath) {
     displayLoadingIndicator()
 
-    // wait until the SW is ready before creating Iframe
-    await readyPromise
+    // iframe needs to be intercepted by service worker
+    await swReadyPromise
 
     displayTorrentFrame()
 
