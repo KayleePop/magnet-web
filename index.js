@@ -307,6 +307,10 @@ async function main () {
             height: 100%;
           }
 
+          #torrentFrame {
+            display: contents; /* allows iframe to fill entire screen */
+          }
+
           #torrentFrame iframe {
             border: none;
             width: 100%;
