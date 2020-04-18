@@ -3,7 +3,7 @@
   "main": "index.js",
   "scripts": {
     "start": "npm run build && node server.js",
-    "bundle": "browserify index.js > bundle.js",
+    "bundle": "browserify --plugin tinyify index.js > bundle.js",
     "generate-worker": "echo \"(path) => path.startsWith('/magnet/')\" | stream-to-sw > worker.js",
     "build": "npm run bundle && npm run generate-worker"
   },
@@ -11,7 +11,8 @@
   "license": "MIT",
   "devDependencies": {
     "browserify": "^16.5.1",
-    "standard": "^14.3.3"
+    "standard": "^14.3.3",
+    "tinyify": "^2.5.2"
   },
   "dependencies": {
     "range-parser": "^1.2.1",
