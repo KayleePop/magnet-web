@@ -17,6 +17,6 @@
   "dependencies": {
     "range-parser": "^1.2.1",
     "stream-to-sw": "^1.1.0",
-    "webtorrent": "^0.108.0"
+    "webtorrent": "^0.108.2"
   }
 }
