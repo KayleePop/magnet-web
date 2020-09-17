@@ -1,14 +1,119 @@
 // parse HTTP range headers
 const parseRange = require('range-parser')
+const Piece = require('torrent-piece')
 
 const WebTorrent = require('webtorrent')
 const webtorrentClient = new WebTorrent()
 
 const registerStreamToFetch = require('stream-to-sw')
 
+// a chunk store that clears old data after more than 100mb of memory is used
+// it monkey patches into webtorrent to ensure that any discarded pieces will be redownloaded if needed again
+class HundredMbChunkStore {
+  constructor (chunkLength, opts) {
+    if (!opts) opts = {}
+
+    this.chunkLength = chunkLength
+
+    this.chunks = []
+
+    // number of chunks in 100mb
+    this.maximumChunks = Math.floor(100 * 1024 * 1024 / this.chunkLength)
+
+    // log of puts in order
+    this.putIndices = []
+
+    // for monkey patching the torrent on removal of an index
+    this.torrent = webtorrentClient.get(opts.name)
+  }
+
+  async put (index, buf, cb = () => {}) {
+    await Promise.resolve()
+
+    this.putIndices.push(index)
+
+    this.chunks[index] = buf
+    cb()
+
+    // evict the oldest chunk if the store is full
+    if (this.putIndices.length > this.maximumChunks) {
+      const oldestChunkIndex = this.putIndices.shift()
+
+      this.chunks[oldestChunkIndex] = null
+
+      // monkey patch torrent to re-download
+      this.torrent.pieces[oldestChunkIndex] = new Piece(this.chunkLength)
+      this.torrent.bitfield.set(oldestChunkIndex, false)
+    }
+  }
+
+  async get (index, opts, cb = () => {}) {
+    if (typeof opts === 'function') return this.get(index, null, opts)
+
+    await Promise.resolve() // ensure callback isn't called syncronously
+
+    const buf = this.chunks[index]
+
+    if (!buf) {
+      const err = new Error('Chunk not found')
+      err.notFound = true
+      return cb(err)
+    }
+
+    if (opts) {
+      const offset = opts.offset || 0
+      const len = opts.length || (buf.length - offset)
+      cb(null, buf.slice(offset, offset + len))
+    } else {
+      cb(null, buf)
+    }
+  }
+
+  async close (cb = () => {}) {
+    await Promise.resolve() // ensure callback isn't called syncronously
+    cb()
+  }
+
+  async destroy (cb = () => {}) {
+    await Promise.resolve()
+    cb()
+  }
+}
+
 // if the magnet-web app is inside a directory instead of the html root,
 //  use this to set all the urls to that directory
 const appDir = ''
+
+const getTorrent = async (hashId) => {
+  const torrentOpts = {
+    store: HundredMbChunkStore,
+    announce: [
+      // these are the default trackers used by instant.io and webtorrent desktop
+      'wss://tracker.btorrent.xyz',
+      'wss://tracker.fastcast.nz',
+      'wss://tracker.openwebtorrent.com'
+    ]
+  }
+
+  let torrent = webtorrentClient.get(hashId)
+
+  // if torrent doesn't already exist
+  if (!torrent) {
+    torrent = webtorrentClient.add(hashId, torrentOpts)
+
+    // remove all queued downloads (everything is queued to download by default)
+    // creating a stream will select necessary data
+    torrent.files.forEach(file => file.deselect())
+    torrent.deselect(0, torrent.pieces.length - 1, false)
+  }
+
+  // return torrent after metadata is fetched
+  if (!torrent.metadata) {
+    await new Promise(resolve => torrent.once('metadata', resolve))
+  }
+
+  return torrent
+}
 
 const swReadyPromise = registerStreamToFetch(`${appDir}/worker.js`, async (req, res) => {
   // torrent file names with spaces or other characters get encoded
@@ -19,26 +124,7 @@ const swReadyPromise = registerStreamToFetch(`${appDir}/worker.js`, async (req, 
   const hashId = matched[1]
   const filePath = matched[2] || ''
 
-  const torrent = await new Promise((resolve, reject) => {
-    // these are the default trackers used by instant.io and webtorrent desktop
-    const torrentOpts = {
-      announce: [
-        'wss://tracker.btorrent.xyz',
-        'wss://tracker.fastcast.nz',
-        'wss://tracker.openwebtorrent.com'
-      ]
-    }
-
-    // add torrent to client or use existing
-    const torrent = webtorrentClient.get(hashId) || webtorrentClient.add(hashId, torrentOpts)
-
-    // wait for metadata to be available for matching files to path
-    if (torrent.metadata) {
-      resolve(torrent)
-    } else {
-      torrent.once('metadata', () => resolve(torrent))
-    }
-  })
+  const torrent = await getTorrent(hashId)
 
   // all files that are under the path
   const matchedFiles = torrent.files.filter(file => {

@@ -31,6 +31,8 @@ The URL scheme is `/{webtorrent Info Hash}/path` where the path is to a file wit
 
 [Stream-to-SW](https://github.com/KayleePop/stream-to-sw) is used to register a service worker that responds to requests using a stream from the main thread. It runs webtorrent on the main page, then it loads the actual file from the torrent into an iframe. This allows webtorrent to stay running even when loading different pages/files from the service worker which would normally stop all javascript if it was all in one window.
 
+A custom chunk store is used to ensure that a maximum of 100mb of data is loaded into memory. In addition, only chunks requested by the service worker's streams are downloaded and seeded to peers.
+
 ## TODO
 
 PRs are welcome for these and any other ideas.
