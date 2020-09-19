@@ -70,14 +70,13 @@ class HundredMbChunkStore {
   }
 
   async close (cb = () => {}) {
+    this.chunks = null
+    this.putIndices = null
     await Promise.resolve() // ensure callback isn't called syncronously
     cb()
   }
 
-  async destroy (cb = () => {}) {
-    await Promise.resolve()
-    cb()
-  }
+  destroy (cb) { this.close(cb) }
 }
 
 // if the magnet-web app is inside a directory instead of the html root,
