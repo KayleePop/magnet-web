@@ -4,7 +4,7 @@
   "scripts": {
     "start": "npm run build && node server.js",
     "bundle": "browserify --plugin tinyify index.js > bundle.js",
-    "generate-worker": "echo \"(path) => path.startsWith('/magnet/')\" | stream-to-sw > worker.js",
+    "generate-worker": "echo \"(path) => path.startsWith('/magnet-web/magnet/')\" | stream-to-sw > worker.js",
     "build": "npm run bundle && npm run generate-worker"
   },
   "author": "KayleePop",
