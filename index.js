@@ -245,7 +245,22 @@ async function main () {
 
   // display functions hoisted from below
   if (isTorrentPath) {
-    displayTorrentPage()
+    // /{hashid}/* including query params and hash
+    const torrentPath = window.location.href.replace(`${window.origin}${appDir}`, '')
+
+    // load torrent file into video tag if autoplay or video query params are set
+    // this allows the site to work with metastream (it automatically adds this query param)
+    if (window.location.href.includes('autoplay=true')) {
+      document.body.innerHTML += `
+        <span id="torrentVideo">
+          <video autoplay controls src="${`${appDir}/magnet${torrentPath}`}"></video>
+
+          <style>
+          </style>
+        </span>`
+    } else {
+      displayTorrentPage(torrentPath)
+    }
   } else {
     // reset url to home if it doesn't match any routes
     window.history.replaceState(null, null, `${appDir}`)
@@ -310,13 +325,13 @@ async function main () {
     }, { once: true })
   }
 
-  async function displayTorrentPage () {
+  async function displayTorrentPage (torrentPath) {
     displayLoadingIndicator()
 
     // iframe needs to be intercepted by service worker
     await swReadyPromise
 
-    displayTorrentFrame()
+    displayTorrentFrame(torrentPath)
 
     const torrentFrame = document.getElementById('torrentFrame')
     const iframe = document.querySelector('#torrentFrame iframe')
@@ -346,63 +361,60 @@ async function main () {
     })
     iframe.contentWindow.addEventListener('hashchange', updateUrl) // when hash changes
     iframe.contentWindow.addEventListener('popstate', updateUrl) // when history API is used
-  }
 
-  function displayLoadingIndicator () {
-    document.body.innerHTML += `
-      <div id="loadingIndicator">
-        loading
+    function displayLoadingIndicator () {
+      document.body.innerHTML += `
+        <div id="loadingIndicator">
+          loading
 
-        <style>
-          #loadingIndicator {
-            font-size: 3em;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-          }
-          #loadingIndicator:after {
-            animation: dots 3s infinite;
-            content: '';
-          }
-          @keyframes dots {
-            25%  { content: '.'; }
-            50%  { content: '..'; }
-            75%  { content: '...'; }
-          }
-        </style>
-      </div>`
-  }
+          <style>
+            #loadingIndicator {
+              font-size: 3em;
+              height: 100%;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+            }
+            #loadingIndicator:after {
+              animation: dots 3s infinite;
+              content: '';
+            }
+            @keyframes dots {
+              25%  { content: '.'; }
+              50%  { content: '..'; }
+              75%  { content: '...'; }
+            }
+          </style>
+        </div>`
+    }
 
-  // load the torrent file in a borderless iframe, so that the SW can intercept everything
-  //  while the main thread is available to create the stream for the response
-  // it would be better to run webtorrent directly from the service worker,
-  //  but webRTC connections can't be started from workers (yet)
-  function displayTorrentFrame () {
-    // /{hashid}/* including query params and hash
-    const torrentPath = window.location.href.replace(`${window.origin}${appDir}`, '')
+    // load the torrent file in a borderless iframe, so that the SW can intercept everything
+    //  while the main thread is available to create the stream for the response
+    // it would be better to run webtorrent directly from the service worker,
+    //  but webRTC connections can't be started from workers (yet)
+    function displayTorrentFrame (torrentPath) {
+      document.body.innerHTML += `
+        <span id="torrentFrame">
+          <iframe src="${`${appDir}/magnet${torrentPath}`}"></iframe>
 
-    document.body.innerHTML += `
-      <span id="torrentFrame">
-        <iframe src="${`${appDir}/magnet${torrentPath}`}"></iframe>
+          <style>
+            body {
+              margin: 0px;
+              width: 100%;
+              height: 100%;
+            }
 
-        <style>
-          body {
-            margin: 0px;
-            width: 100%;
-            height: 100%;
-          }
+            #torrentFrame {
+              display: contents; /* allows iframe to fill entire screen */
+            }
 
-          #torrentFrame {
-            display: contents; /* allows iframe to fill entire screen */
-          }
-
-          #torrentFrame iframe {
-            border: none;
-            width: 100%;
-            height: 100%;
-          }
-        </style>
-      </span>`
+            #torrentFrame iframe {
+              border: none;
+              width: 100%;
+              height: 100%;
+            }
+          </style>
+        </span>`
+    }
   }
 }

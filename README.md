@@ -33,6 +33,10 @@ The URL scheme is `/{webtorrent Info Hash}/path` where the path is to a file wit
 
 A custom chunk store is used to ensure that a maximum of 100mb of data is loaded into memory. In addition, only chunks requested by the service worker's streams are downloaded and seeded to peers.
 
+## Metastream
+
+Magnet-web works with [metastream](https://getmetastream.com/) to watch videos within torrents with friends!
+
 ## TODO
 
 PRs are welcome for these and any other ideas.
