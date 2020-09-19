@@ -1,3 +1,7 @@
+// if the magnet-web app is inside a directory instead of the html root,
+//  use this to set all the urls to that directory
+const appDir = ''
+
 // parse HTTP range headers
 const parseRange = require('range-parser')
 const Piece = require('torrent-piece')
@@ -78,10 +82,6 @@ class HundredMbChunkStore {
 
   destroy (cb) { this.close(cb) }
 }
-
-// if the magnet-web app is inside a directory instead of the html root,
-//  use this to set all the urls to that directory
-const appDir = ''
 
 const getTorrent = async (hashId) => {
   const torrentOpts = {
