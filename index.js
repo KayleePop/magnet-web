@@ -252,7 +252,7 @@ async function main () {
     if (window.location.href.includes('autoplay=true')) {
       document.body.innerHTML += `
         <span id="torrentVideo">
-          <video autoplay controls src="${`${appDir}/magnet${torrentPath}`}"></video>
+          <video autoplay src="${`${appDir}/magnet${torrentPath}`}"></video>
 
           <style>
           </style>
