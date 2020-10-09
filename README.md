@@ -4,8 +4,6 @@ https://kayleepop.github.io/magnet-web/
 
 View webtorrents like they're an http server using a service worker. Easily browse the files in a torrent in browser, and even load static websites over webtorrent. Just include an `index.html` file in the torrent's root.
 
-It's also hosted on glitch: https://glitch.com/~kayleepop-magnet-web
-
 ## How To Run
 
 ``` bash
