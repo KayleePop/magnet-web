@@ -11,6 +11,8 @@ const webtorrentClient = new WebTorrent()
 
 const registerStreamToFetch = require('stream-to-sw')
 
+const mime = require('mime/lite')
+
 // a chunk store that clears old data after more than 100mb of memory is used
 // it monkey patches into webtorrent to ensure that any discarded pieces will be redownloaded if needed again
 class HundredMbChunkStore {
@@ -193,7 +195,7 @@ const swReadyPromise = registerStreamToFetch(`${appDir}/worker.js`, async (req, 
 
   // respond to request with stream of webtorrent file
   function getFileStream (file) {
-    res.headers['content-type'] = file._getMimeType() // the mime type of the file
+    res.headers['content-type'] = mime.getType(file.name) // the mime type of the file
     res.headers['accept-ranges'] = 'bytes' // range headers are supported
 
     let range
