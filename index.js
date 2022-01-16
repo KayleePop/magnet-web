@@ -1,6 +1,6 @@
 // if the magnet-web app is inside a directory instead of the html root,
 //  use this to set all the urls to that directory
-const appDir = ''
+const appDir = '/magnet-web'
 
 // parse HTTP range headers
 const parseRange = require('range-parser')
